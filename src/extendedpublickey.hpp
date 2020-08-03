@@ -84,7 +84,15 @@ class ExtendedPublicKey {
               chainCode(ChainCode()),
               pk(PublicKey()) {}
 
+    uint32_t version;
+    uint8_t depth;
+    uint32_t parentFingerprint;
+    uint32_t childNumber;
+
+    ChainCode chainCode;
+    PublicKey pk;
 private:
+
     // private constructor, force use of static methods
     explicit ExtendedPublicKey(const uint32_t v, const uint8_t d,
                                const uint32_t pfp, const uint32_t cn,
@@ -95,14 +103,6 @@ private:
           childNumber(cn),
           chainCode(code),
           pk(key) {}
-
-    uint32_t version;
-    uint8_t depth;
-    uint32_t parentFingerprint;
-    uint32_t childNumber;
-
-    ChainCode chainCode;
-    PublicKey pk;
 };
 } // end namespace bls
 

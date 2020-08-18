@@ -48,8 +48,8 @@ class ChainCode {
 
     // Prevent direct construction, use static constructor
     ChainCode() {}
-private:
 
+ private:
     bn_t chainCode;
 };
 } // end namespace bls

@@ -91,8 +91,8 @@ class ExtendedPublicKey {
 
     ChainCode chainCode;
     PublicKey pk;
-private:
 
+ private:
     // private constructor, force use of static methods
     explicit ExtendedPublicKey(const uint32_t v, const uint8_t d,
                                const uint32_t pfp, const uint32_t cn,

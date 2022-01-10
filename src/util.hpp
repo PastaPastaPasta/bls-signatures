@@ -21,7 +21,6 @@
 #include <string>
 #include <vector>
 #include <type_traits>
-#include <span>
 
 namespace bls {
 

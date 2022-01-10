@@ -54,7 +54,7 @@ PrivateKey CoreMPL::KeyGen(const Bytes seed) {
     return HDKeys::KeyGen(seed);
 }
 
-Bytes CoreMPL::SkToPk(const PrivateKey &seckey)
+std::vector<uint8_t> CoreMPL::SkToPk(const PrivateKey &seckey)
 {
     return seckey.GetG1Element().Serialize();
 }
@@ -89,7 +89,7 @@ bool CoreMPL::Verify(const G1Element& pubkey, const Bytes message, const G2Eleme
     return CoreMPL::NativeVerify((g1_t*)vecG1.data(), (g2_t*)vecG2.data(), 2);
 }
 
-Bytes CoreMPL::Aggregate(const span<const vector<uint8_t>> signatures)
+std::vector<uint8_t> CoreMPL::Aggregate(const span<const vector<uint8_t>> signatures)
 {
     vector<G2Element> elements;
     for (const vector<uint8_t>& signature : signatures) {
@@ -98,7 +98,7 @@ Bytes CoreMPL::Aggregate(const span<const vector<uint8_t>> signatures)
     return CoreMPL::Aggregate(elements).Serialize();
 }
 
-Bytes CoreMPL::Aggregate(const span<const Bytes> signatures)
+std::vector<uint8_t> CoreMPL::Aggregate(const span<const Bytes> signatures)
 {
     vector<G2Element> elements;
     for (const Bytes& signature : signatures) {
@@ -156,7 +156,7 @@ bool CoreMPL::AggregateVerify(const span<const G1Element> pubkeys,
                               const span<const vector<uint8_t>> messages,
                               const G2Element &signature)
 {
-    return CoreMPL::AggregateVerify(pubkeys, std::vector<Bytes>(messages.begin(), messages.end()), signature);
+    return CoreMPL::AggregateVerify(pubkeys, messages, signature);
 }
 
 bool CoreMPL::AggregateVerify(const span<const G1Element> pubkeys,
@@ -300,7 +300,7 @@ G2Element AugSchemeMPL::Sign(const PrivateKey& seckey,
                              const Bytes message,
                              const G1Element& prepend_pk)
 {
-    Bytes serializedPk = prepend_pk.Serialize();
+    std::vector<uint8_t> serializedPk = prepend_pk.Serialize();
     std::vector<uint8_t> augMessage{serializedPk.begin(), serializedPk.end()};
     augMessage.reserve(augMessage.size() + message.size());
     augMessage.insert(augMessage.end(), message.begin(), message.end());
@@ -322,7 +322,7 @@ bool AugSchemeMPL::Verify(const G1Element& pubkey,
                           const Bytes message,
                           const G2Element& signature)
 {
-    Bytes serializedPk = pubkey.Serialize();
+    std::vector<uint8_t> serializedPk = pubkey.Serialize();
     std::vector<uint8_t> augMessage{serializedPk.begin(), serializedPk.end()};
     augMessage.reserve(augMessage.size() + message.size());
     augMessage.insert(augMessage.end(), message.begin(), message.end());
@@ -381,7 +381,7 @@ bool AugSchemeMPL::AggregateVerify(const span<const G1Element> pubkeys,
     vector<vector<uint8_t>> augMessages(nPubKeys);
     for (std::size_t i = 0; i < nPubKeys; ++i) {
         vector<uint8_t>& aug = augMessages[i];
-        Bytes&& pubkey = pubkeys[i].Serialize();
+        vector<uint8_t>&& pubkey = pubkeys[i].Serialize();
         aug.reserve(pubkey.size() + messages[i].size());
         aug.insert(aug.end(), pubkey.begin(), pubkey.end());
         aug.insert(aug.end(), messages[i].begin(), messages[i].end());

@@ -43,7 +43,7 @@ public:
     virtual PrivateKey KeyGen(Bytes seed);
 
     // Generates a public key from a secret key
-    virtual Bytes SkToPk(const PrivateKey &seckey);
+    virtual std::vector<uint8_t> SkToPk(const PrivateKey &seckey);
 
     virtual G1Element SkToG1(const PrivateKey &seckey);
 
@@ -53,8 +53,8 @@ public:
 
     virtual bool Verify(const G1Element& pubkey, Bytes message, const G2Element& signature);
 
-    virtual Bytes Aggregate(span<const vector<uint8_t>> signatures);
-    virtual Bytes Aggregate(span<const Bytes> signatures);
+    virtual std::vector<uint8_t> Aggregate(span<const vector<uint8_t>> signatures);
+    virtual std::vector<uint8_t> Aggregate(span<const Bytes> signatures);
 
     virtual G2Element Aggregate(span<const G2Element> signatures);
 

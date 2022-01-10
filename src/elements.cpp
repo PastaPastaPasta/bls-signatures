@@ -133,12 +133,12 @@ uint32_t G1Element::GetFingerprint() const
     return Util::FourBytesToInt(hash);
 }
 
-Bytes G1Element::Serialize() const {
-    uint8_t buffer[G1Element::SIZE + 1];
-    g1_write_bin(buffer, G1Element::SIZE + 1, p, 1);
+std::vector<uint8_t> G1Element::Serialize() const {
+    std::array<uint8_t, G1Element::SIZE + 1> buffer;
+    g1_write_bin(buffer.data(), G1Element::SIZE + 1, p, 1);
 
     if (buffer[0] == 0x00) {  // infinity
-        std::array<uint8_t, G1Element::SIZE> result{};
+        std::vector<uint8_t> result(G1Element::SIZE, 0);
         result[0] = 0xc0;
         return result;
     }
@@ -148,7 +148,7 @@ Bytes G1Element::Serialize() const {
     }
 
     buffer[1] |= 0x80;  // indicate compression
-    return std::vector<uint8_t>(buffer + 1, buffer + 1 + G1Element::SIZE);
+    return std::vector<uint8_t>(buffer.data() + 1, buffer.data() + 1 + G1Element::SIZE);
 }
 
 bool operator==(const G1Element & a, const G1Element &b)
@@ -305,12 +305,12 @@ G2Element G2Element::Negate() const
 
 GTElement G2Element::Pair(const G1Element& a) const { return a & (*this); }
 
-Bytes G2Element::Serialize() const {
+std::vector<uint8_t> G2Element::Serialize() const {
     uint8_t buffer[G2Element::SIZE + 1];
     g2_write_bin(buffer, G2Element::SIZE + 1, (g2_st*)q, 1);
 
     if (buffer[0] == 0x00) {  // infinity
-        std::array<uint8_t, G2Element::SIZE> result{};
+        std::vector<uint8_t> result(G2Element::SIZE, 0);
         result[0] = 0xc0;
         return result;
     }
@@ -447,9 +447,9 @@ void GTElement::Serialize(uint8_t* buffer) const
     gt_write_bin(buffer, GTElement::SIZE, *(gt_t*)&r, 1);
 }
 
-Bytes GTElement::Serialize() const
+std::vector<uint8_t> GTElement::Serialize() const
 {
-    std::array<uint8_t, GTElement::SIZE> data{};
+    std::vector<uint8_t> data(GTElement::SIZE);
     Serialize(data.data());
     return data;
 }

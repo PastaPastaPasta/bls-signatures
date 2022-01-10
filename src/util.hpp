@@ -41,6 +41,9 @@ public:
         : pData(cont.data()), nSize(cont.size())
     {
     }
+
+//    span(std::vector<typename std::remove_const<T>::type>&& cont) = delete;
+
     template<std::size_t SIZE>
     span(std::array<T, SIZE>& cont)
             : pData(cont.data()), nSize(SIZE)

@@ -63,7 +63,7 @@ public:
     G1Element Negate() const;
     GTElement Pair(const G2Element &b) const;
     uint32_t GetFingerprint() const;
-    Bytes Serialize() const;
+    std::vector<uint8_t> Serialize() const;
 
     friend bool operator==(const G1Element &a, const G1Element &b);
     friend bool operator!=(const G1Element &a, const G1Element &b);
@@ -108,7 +108,7 @@ public:
     void ToNative(g2_t output) const;
     G2Element Negate() const;
     GTElement Pair(const G1Element &a) const;
-    Bytes Serialize() const;
+    std::vector<uint8_t> Serialize() const;
 
     friend bool operator==(G2Element const &a, G2Element const &b);
     friend bool operator!=(G2Element const &a, G2Element const &b);
@@ -134,7 +134,7 @@ public:
     static GTElement Unity();  // unity
 
     void Serialize(uint8_t *buffer) const;
-    Bytes Serialize() const;
+    std::vector<uint8_t> Serialize() const;
 
     friend bool operator==(GTElement const &a, GTElement const &b);
     friend bool operator!=(GTElement const &a, GTElement const &b);

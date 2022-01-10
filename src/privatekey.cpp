@@ -211,9 +211,9 @@ void PrivateKey::Serialize(uint8_t *buffer) const
     bn_write_bin(buffer, PrivateKey::PRIVATE_KEY_SIZE, keydata);
 }
 
-Bytes PrivateKey::Serialize() const
+std::vector<uint8_t> PrivateKey::Serialize() const
 {
-    std::array<uint8_t, PRIVATE_KEY_SIZE> data{};
+    std::vector<uint8_t> data(PRIVATE_KEY_SIZE);
     Serialize(data.data());
     return data;
 }

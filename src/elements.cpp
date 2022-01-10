@@ -20,7 +20,7 @@ namespace bls {
 
 const size_t G1Element::SIZE;
 
-G1Element G1Element::FromBytes(const Bytes& bytes)
+G1Element G1Element::FromBytes(const Bytes bytes)
 {
     if (bytes.size() != SIZE) {
         throw std::invalid_argument("G1Element::FromBytes: Invalid size");
@@ -65,7 +65,7 @@ G1Element G1Element::FromBytes(const Bytes& bytes)
 
 G1Element G1Element::FromByteVector(const std::vector<uint8_t>& bytevec)
 {
-    return G1Element::FromBytes(Bytes(bytevec));
+    return G1Element::FromBytes(bytevec);
 }
 
 G1Element G1Element::FromNative(const g1_t element)
@@ -76,19 +76,12 @@ G1Element G1Element::FromNative(const g1_t element)
     return ele;
 }
 
-G1Element G1Element::FromMessage(const std::vector<uint8_t>& message,
-                                 const uint8_t* dst,
-                                 int dst_len)
-{
-    return FromMessage(Bytes(message), dst, dst_len);
-}
-
-G1Element G1Element::FromMessage(const Bytes& message,
+G1Element G1Element::FromMessage(const Bytes message,
                                  const uint8_t* dst,
                                  int dst_len)
 {
     G1Element ans;
-    ep_map_dst(ans.p, message.begin(), (int)message.size(), dst, dst_len);
+    ep_map_dst(ans.p, message.data(), (int)message.size(), dst, dst_len);
     BLS::CheckRelicErrors();
     assert(ans.IsValid());
     return ans;
@@ -140,12 +133,12 @@ uint32_t G1Element::GetFingerprint() const
     return Util::FourBytesToInt(hash);
 }
 
-std::vector<uint8_t> G1Element::Serialize() const {
+Bytes G1Element::Serialize() const {
     uint8_t buffer[G1Element::SIZE + 1];
     g1_write_bin(buffer, G1Element::SIZE + 1, p, 1);
 
     if (buffer[0] == 0x00) {  // infinity
-        std::vector<uint8_t> result(G1Element::SIZE, 0);
+        std::array<uint8_t, G1Element::SIZE> result{};
         result[0] = 0xc0;
         return result;
     }
@@ -203,7 +196,7 @@ G1Element operator*(const bn_t& k, const G1Element& a) { return a * k; }
 
 const size_t G2Element::SIZE;
 
-G2Element G2Element::FromBytes(const Bytes& bytes)
+G2Element G2Element::FromBytes(const Bytes bytes)
 {
     if (bytes.size() != SIZE) {
         throw std::invalid_argument("G2Element::FromBytes: Invalid size");
@@ -253,7 +246,7 @@ G2Element G2Element::FromBytes(const Bytes& bytes)
 
 G2Element G2Element::FromByteVector(const std::vector<uint8_t>& bytevec)
 {
-    return G2Element::FromBytes(Bytes(bytevec));
+    return G2Element::FromBytes(bytevec);
 }
 
 G2Element G2Element::FromNative(const g2_t element)
@@ -264,19 +257,12 @@ G2Element G2Element::FromNative(const g2_t element)
     return ele;
 }
 
-G2Element G2Element::FromMessage(const std::vector<uint8_t>& message,
-                                 const uint8_t* dst,
-                                 int dst_len)
-{
-    return FromMessage(Bytes(message), dst, dst_len);
-}
-
-G2Element G2Element::FromMessage(const Bytes& message,
+G2Element G2Element::FromMessage(const Bytes message,
                                  const uint8_t* dst,
                                  int dst_len)
 {
     G2Element ans;
-    ep2_map_dst(ans.q, message.begin(), (int)message.size(), dst, dst_len);
+    ep2_map_dst(ans.q, message.data(), (int)message.size(), dst, dst_len);
     BLS::CheckRelicErrors();
     assert(ans.IsValid());
     return ans;
@@ -319,12 +305,12 @@ G2Element G2Element::Negate() const
 
 GTElement G2Element::Pair(const G1Element& a) const { return a & (*this); }
 
-std::vector<uint8_t> G2Element::Serialize() const {
+Bytes G2Element::Serialize() const {
     uint8_t buffer[G2Element::SIZE + 1];
     g2_write_bin(buffer, G2Element::SIZE + 1, (g2_st*)q, 1);
 
     if (buffer[0] == 0x00) {  // infinity
-        std::vector<uint8_t> result(G2Element::SIZE, 0);
+        std::array<uint8_t, G2Element::SIZE> result{};
         result[0] = 0xc0;
         return result;
     }
@@ -461,9 +447,9 @@ void GTElement::Serialize(uint8_t* buffer) const
     gt_write_bin(buffer, GTElement::SIZE, *(gt_t*)&r, 1);
 }
 
-std::vector<uint8_t> GTElement::Serialize() const
+Bytes GTElement::Serialize() const
 {
-    std::vector<uint8_t> data(GTElement::SIZE);
+    std::array<uint8_t, GTElement::SIZE> data{};
     Serialize(data.data());
     return data;
 }

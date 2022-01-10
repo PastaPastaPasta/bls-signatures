@@ -40,13 +40,19 @@ public:
         g1_set_infty(p);
     }
 
-    static G1Element FromBytes(const Bytes& bytes);
+    static G1Element FromBytes(Bytes bytes);
+    /**
+     * Deprecated, prefer FromBytes which takes a span.
+     */
     static G1Element FromByteVector(const std::vector<uint8_t> &bytevec);
     static G1Element FromNative(const g1_t element);
     static G1Element FromMessage(const std::vector<uint8_t> &message,
                                  const uint8_t *dst,
-                                 int dst_len);
-    static G1Element FromMessage(const Bytes& message,
+                                 int dst_len)
+    {
+        return G1Element::FromMessage(Bytes{message.data(), message.size()}, dst, dst_len);
+    }
+    static G1Element FromMessage(const Bytes message,
                                  const uint8_t* dst,
                                  int dst_len);
     static G1Element Generator();
@@ -57,7 +63,7 @@ public:
     G1Element Negate() const;
     GTElement Pair(const G2Element &b) const;
     uint32_t GetFingerprint() const;
-    std::vector<uint8_t> Serialize() const;
+    Bytes Serialize() const;
 
     friend bool operator==(const G1Element &a, const G1Element &b);
     friend bool operator!=(const G1Element &a, const G1Element &b);
@@ -80,13 +86,19 @@ public:
         g2_set_infty(q);
     }
 
-    static G2Element FromBytes(const Bytes& bytes);
+    static G2Element FromBytes(Bytes bytes);
+    /**
+    * Deprecated, prefer FromBytes which takes a span.
+    */
     static G2Element FromByteVector(const std::vector<uint8_t> &bytevec);
     static G2Element FromNative(const g2_t element);
     static G2Element FromMessage(const std::vector<uint8_t>& message,
                                  const uint8_t* dst,
-                                 int dst_len);
-    static G2Element FromMessage(const Bytes& message,
+                                 int dst_len)
+    {
+        return G2Element::FromMessage(Bytes{message}, dst, dst_len);
+    }
+    static G2Element FromMessage(Bytes message,
                                  const uint8_t* dst,
                                  int dst_len);
     static G2Element Generator();
@@ -96,7 +108,7 @@ public:
     void ToNative(g2_t output) const;
     G2Element Negate() const;
     GTElement Pair(const G1Element &a) const;
-    std::vector<uint8_t> Serialize() const;
+    Bytes Serialize() const;
 
     friend bool operator==(G2Element const &a, G2Element const &b);
     friend bool operator!=(G2Element const &a, G2Element const &b);
@@ -114,12 +126,15 @@ class GTElement {
 public:
     static const size_t SIZE = 384;
     static GTElement FromBytes(const Bytes& bytes);
+    /**
+    * Deprecated, prefer FromBytes which takes a span.
+    */
     static GTElement FromByteVector(const std::vector<uint8_t> &bytevec);
     static GTElement FromNative(const gt_t *element);
     static GTElement Unity();  // unity
 
     void Serialize(uint8_t *buffer) const;
-    std::vector<uint8_t> Serialize() const;
+    Bytes Serialize() const;
 
     friend bool operator==(GTElement const &a, GTElement const &b);
     friend bool operator!=(GTElement const &a, GTElement const &b);

@@ -35,7 +35,7 @@ class PrivateKey {
     static PrivateKey FromBytes(const Bytes& bytes, bool modOrder = false);
 
     // Construct a private key from a bytearray.
-    static PrivateKey FromByteVector(const std::vector<uint8_t> bytes, bool modOrder = false);
+    static PrivateKey FromByteVector(const std::vector<uint8_t>& bytes, bool modOrder = false);
 
     // Aggregate many private keys into one (sum of keys mod order)
     static PrivateKey Aggregate(std::vector<PrivateKey> const &privateKeys);
@@ -70,7 +70,7 @@ class PrivateKey {
 
     // Serialize the key into bytes
     void Serialize(uint8_t *buffer) const;
-    std::vector<uint8_t> Serialize() const;
+    Bytes Serialize() const;
 
     G2Element SignG2(
         const uint8_t *msg,

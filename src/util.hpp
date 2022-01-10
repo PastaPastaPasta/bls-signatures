@@ -20,32 +20,78 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <type_traits>
+#include <span>
 
 namespace bls {
 
 class BLS;
 
-class Bytes {
-    const uint8_t* pData;
-    const size_t nSize;
+template <typename T>
+class span {
+    const T* pData;
+    size_t nSize;
 
 public:
-    explicit Bytes(const uint8_t* pDataIn, const size_t nSizeIn)
-        : pData(pDataIn), nSize(nSizeIn)
-    {
-    }
-    explicit Bytes(const std::vector<uint8_t>& vecBytes)
-        : pData(vecBytes.data()), nSize(vecBytes.size())
+    explicit span(const T* pDataIn, const size_t nSizeIn)
+        : pData((unsigned char *) pDataIn), nSize(nSizeIn)
     {
     }
 
-    inline const uint8_t* begin() const { return pData; }
-    inline const uint8_t* end() const { return pData + nSize; }
+    span(const std::vector<typename std::remove_const<T>::type>& cont)
+        : pData(cont.data()), nSize(cont.size())
+    {
+    }
+    template<std::size_t SIZE>
+    span(std::array<T, SIZE>& cont)
+            : pData(cont.data()), nSize(SIZE)
+    {
+    }
 
+    inline const T* begin() const { return pData; }
+    inline const T* end() const { return pData + nSize; }
+
+    inline const T* data() const { return pData; }
     inline size_t size() const { return nSize; }
 
-    const uint8_t& operator[](const int nIndex) const { return pData[nIndex]; }
+    const T& operator[](const int nIndex) const { return pData[nIndex]; }
+    bool operator==(const span<T>& other) const
+    {
+        return std::equal(begin(), end(), other.begin(), other.end());
+    }
 };
+
+
+template <typename T, int SIZE>
+class const_span {
+    T* pData;
+
+public:
+    explicit const_span(const T* pDataIn)
+        : pData(pDataIn)
+    {
+    }
+
+    const_span(const std::vector<typename std::remove_const<T>::type>& cont)
+    : pData(cont.data())
+    {
+    }
+
+    const_span(const std::array<typename std::remove_const<T>::type, SIZE>& cont)
+    : pData(cont.data())
+    {
+    }
+    inline const T* begin() const { return pData; }
+    inline const T* end() const { return pData + SIZE; }
+
+    inline const T* data() const { return pData; }
+    inline size_t size() const { return SIZE; }
+
+    const T& operator[](const int nIndex) const { return pData[nIndex]; }
+};
+
+
+using Bytes = span<uint8_t>;
 
 class Util {
  public:
@@ -57,19 +103,11 @@ class Util {
         md_map_sh256(output, message, messageLen);
     }
 
-    static std::string HexStr(const uint8_t* data, size_t len) {
+    static std::string HexStr(Bytes data) {
         std::stringstream s;
         s << std::hex;
-        for (size_t i=0; i < len; ++i)
-            s << std::setw(2) << std::setfill('0') << static_cast<int>(data[i]);
-        return s.str();
-    }
-
-    static std::string HexStr(const std::vector<uint8_t> &data) {
-        std::stringstream s;
-        s << std::hex;
-        for (size_t i=0; i < data.size(); ++i)
-            s << std::setw(2) << std::setfill('0') << static_cast<int>(data[i]);
+        for (auto byte : data)
+            s << std::setw(2) << std::setfill('0') << static_cast<int>(byte);
         return s.str();
     }
 

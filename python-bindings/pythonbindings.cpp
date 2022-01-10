@@ -90,7 +90,7 @@ PYBIND11_MODULE(blspy, m)
             k.Serialize(output);
             std::string ret =
                 "<PrivateKey " +
-                Util::HexStr(output, PrivateKey::PRIVATE_KEY_SIZE) + ">";
+                Util::HexStr(Bytes{output, PrivateKey::PRIVATE_KEY_SIZE}) + ">";
             Util::SecFree(output);
             return ret;
         });
@@ -426,9 +426,8 @@ PYBIND11_MODULE(blspy, m)
         .def(
             "__bytes__",
             [](const G1Element &ele) {
-                vector<uint8_t> out;
                 // Py_BEGIN_ALLOW_THREADS
-                out = ele.Serialize();
+                Bytes out = ele.Serialize();
                 // Py_END_ALLOW_THREADS
                 py::bytes ans = py::bytes(
                     reinterpret_cast<const char *>(out.data()), G1Element::SIZE);
@@ -530,7 +529,7 @@ PYBIND11_MODULE(blspy, m)
         .def(
             "__bytes__",
             [](const G2Element &ele) {
-                vector<uint8_t> out = ele.Serialize();
+                Bytes out = ele.Serialize();
                 py::bytes ans = py::bytes(
                     reinterpret_cast<const char *>(out.data()), G2Element::SIZE);
                 return ans;

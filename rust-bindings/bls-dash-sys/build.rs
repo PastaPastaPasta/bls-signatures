@@ -260,7 +260,7 @@ fn main() {
 
 #[cfg(feature = "apple")]
 fn main() {
-    assert!(false);
+    // assert!(false);
 
     let target = env::var("TARGET").unwrap();
     println!("Building bls-signatures for apple target: {}", target);
@@ -299,7 +299,8 @@ fn main() {
     let include_paths_file_path = bls_dash_build_path.join("include_paths.txt");
 
     let include_paths =
-        fs::read_to_string(include_paths_file_path).expect("should read include paths from file");
+        "";
+        // fs::read_to_string(include_paths_file_path).expect("should read include paths from file");
 
     let mut include_paths: Vec<_> = include_paths
         .split(';')
@@ -313,6 +314,8 @@ fn main() {
         bls_dash_build_path.join("contrib/relic/src"),
         root_path.join("src"),
         root_path.join("include/dashbls"),
+        root_path.join("depends/relic/include"),
+        root_path.join("depends/catch2/include"),
         bls_dash_src_path.clone(),
         bls_dash_src_include_path.clone()
     ]);
@@ -323,9 +326,9 @@ fn main() {
         .collect();
 
     let mut cc = cc::Build::new();
-    for path in include_paths {
-        println!("{}", path.display());
-    }
+    // for path in &include_paths {
+    //     println!("{}", path.display());
+    // }
     // println!("{}", include_paths);
     cc.files(cpp_files)
         .includes(&include_paths)
@@ -341,7 +344,7 @@ fn main() {
     println!("cargo:rustc-link-search={}", target_path.display());
     println!("cargo:rustc-link-lib=static=gmp");
     // println!("cargo:rustc-link-lib=static=sodium");
-    println!("cargo:rustc-link-lib=static=relic_s");
+    // println!("cargo:rustc-link-lib=static=relic_s");
     println!("cargo:rustc-link-lib=static=bls");
     println!("cargo:rustc-link-search={}", bls_dash_src_path.display());
     println!("cargo:rustc-link-lib=static=dashbls");

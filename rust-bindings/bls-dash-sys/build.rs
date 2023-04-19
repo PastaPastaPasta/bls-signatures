@@ -95,6 +95,8 @@ fn main() {
         bls_dash_build_path.join("_deps/relic-build/include"),
         bls_dash_build_path.join("src"),
         root_path.join("include/dashbls"),
+        bls_dash_build_path.join("depends/relic/include"),
+        bls_dash_build_path.join("depends/mimalloc/include"),
         root_path.join("depends/relic/include"),
         root_path.join("depends/mimalloc/include"),
         bls_dash_src_path.clone(),

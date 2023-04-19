@@ -96,6 +96,7 @@ fn main() {
         bls_dash_build_path.join("src"),
         root_path.join("include/dashbls"),
         root_path.join("depends/relic/include"),
+        root_path.join("depends/mimalloc/include"),
         bls_dash_src_path.clone(),
     ]);
 
@@ -149,6 +150,13 @@ fn main() {
     );
 
     println!("cargo:rustc-link-lib=static=relic_s");
+
+    println!(
+        "cargo:rustc-link-search={}",
+        root_path.join("build/depends/mimalloc").display()
+    );
+
+    println!("cargo:rustc-link-lib=static=mimalloc-secure");
 
     println!(
         "cargo:rustc-link-search={}",
@@ -315,6 +323,7 @@ fn main() {
         root_path.join("src"),
         root_path.join("include/dashbls"),
         root_path.join("depends/relic/include"),
+        root_path.join("depends/mimalloc/include"),
         root_path.join("depends/catch2/include"),
         bls_dash_src_path.clone(),
         bls_dash_src_include_path.clone()

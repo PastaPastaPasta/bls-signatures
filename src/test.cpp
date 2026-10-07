@@ -1437,6 +1437,48 @@ TEST_CASE("Schemes")
         REQUIRE(legacyScheme.VerifySecure(legacyPks, legacySecureAggSig, message));
     }
 
+    SECTION("Legacy message lengths") {
+        LegacySchemeMPL scheme;
+        const PrivateKey key1 = scheme.KeyGen(vector<uint8_t>(32, 1));
+        const PrivateKey key2 = scheme.KeyGen(vector<uint8_t>(32, 2));
+        const vector<G1Element> publicKeys{key1.GetG1Element(), key2.GetG1Element()};
+        vector<uint8_t> message1(64, 0xAB);
+        vector<uint8_t> message2(64, 0xCD);
+        const Bytes digest1(message1.data(), BLS::MESSAGE_HASH_LEN);
+        const Bytes digest2(message2.data(), BLS::MESSAGE_HASH_LEN);
+        const G2Element signature1 = scheme.Sign(key1, digest1);
+        const G2Element signature2 = scheme.Sign(key2, digest2);
+        const G2Element aggregate = signature1 + signature2;
+        const vector<G2Element> sameMessageSignatures{signature1, scheme.Sign(key2, digest1)};
+        const G2Element secureAggregate = scheme.AggregateSecure(publicKeys, sameMessageSignatures, digest1);
+
+        REQUIRE(key1.SignG2(digest1.begin(), digest1.size(), nullptr, 0, true) == signature1);
+        REQUIRE(scheme.Verify(publicKeys[0], digest1, signature1));
+        REQUIRE(scheme.VerifySecure(publicKeys, secureAggregate, digest1));
+        REQUIRE(scheme.AggregateVerify(publicKeys, vector<Bytes>{digest1, digest2}, aggregate));
+
+        vector<size_t> badLengths{33, 64};
+        for (size_t length = 0; length < BLS::MESSAGE_HASH_LEN; ++length) {
+            badLengths.push_back(length);
+        }
+        for (const size_t length : badLengths) {
+            const Bytes bad1(message1.data(), length);
+            const Bytes bad2(message2.data(), length);
+            REQUIRE_THROWS_AS(key1.SignG2(message1.data(), length, nullptr, 0, true), std::invalid_argument);
+            REQUIRE_THROWS_AS(G2Element::FromMessage(bad1, nullptr, 0, true), std::invalid_argument);
+            REQUIRE_THROWS_AS(scheme.Sign(key1, bad1), std::invalid_argument);
+            REQUIRE_FALSE(scheme.Verify(publicKeys[0], bad1, signature1));
+            REQUIRE_FALSE(scheme.VerifySecure(publicKeys, secureAggregate, bad1));
+            REQUIRE_FALSE(scheme.AggregateVerify(publicKeys, vector<Bytes>{bad1, digest2}, aggregate));
+            REQUIRE_FALSE(scheme.AggregateVerify(publicKeys, vector<Bytes>{digest1, bad2}, aggregate));
+        }
+
+        BasicSchemeMPL basic;
+        const Bytes shortBasicMessage(message1.data(), 4);
+        const G2Element basicSignature = basic.Sign(key1, shortBasicMessage);
+        REQUIRE(basic.Verify(publicKeys[0], shortBasicMessage, basicSignature));
+    }
+
     SECTION("Legacy scheme") {
         // Test legacy example data defined in https://gist.github.com/xdustinface/318c2c08c36ab12a2b1963caf1f7815c
         std::string strSignHash{"b6d8ee31bbd375dfd55d5fb4b02cfccc68709e64f4c5ffcd3895ceb46540311d"};

@@ -36,6 +36,7 @@ PrivateKey CoreMPLKeyGen(
     const size_t seedLen,
     bool* didErr);
 G1Element CoreMPLSkToG1(const CoreMPL scheme, const PrivateKey sk);
+// Returns nullptr on signing failure; GetLastErrorMsg provides the error.
 G2Element CoreMPLSign(
     const CoreMPL scheme,
     const PrivateKey sk,
@@ -144,6 +145,8 @@ void PopSchemeMPLFree(PopSchemeMPL scheme);
 
 // LegacySchemeMPL
 LegacySchemeMPL NewLegacySchemeMPL();
+// Requires a 32-byte message hash.
+// Returns nullptr on failure; GetLastErrorMsg provides the error.
 G2Element LegacySchemeMPLSign(
     const LegacySchemeMPL scheme,
     const PrivateKey sk,

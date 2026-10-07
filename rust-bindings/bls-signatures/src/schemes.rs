@@ -1,15 +1,15 @@
-use std::ffi::{c_void, CStr};
+use std::ffi::c_void;
 
 use bls_dash_sys::{
     AugSchemeMPLAggregateVerify, AugSchemeMPLFree, AugSchemeMPLSign, AugSchemeMPLVerify,
     BasicSchemeMPLAggregateVerify, BasicSchemeMPLFree, CoreMPLAggregatePubKeys,
-    CoreMPLAggregateSigs, CoreMPLSign, CoreMPLVerify, CoreMPLVerifySecure, GetLastErrorMsg,
+    CoreMPLAggregateSigs, CoreMPLSign, CoreMPLVerify, CoreMPLVerifySecure,
     LegacySchemeMPLAggregateVerify, LegacySchemeMPLSign, LegacySchemeMPLVerify,
     LegacySchemeMPLVerifySecure, NewAugSchemeMPL, NewBasicSchemeMPL, NewLegacySchemeMPL,
 };
 
 // TODO Split into modules
-use crate::{private_key::PrivateKey, G1Element, G2Element};
+use crate::{private_key::PrivateKey, utils::c_err_to_result, BlsError, G1Element, G2Element};
 
 pub trait Scheme {
     fn as_mut_ptr(&self) -> *mut c_void;
@@ -130,16 +130,20 @@ impl Scheme for BasicSchemeMPL {
     }
 
     fn sign(&self, private_key: &PrivateKey, message: &[u8]) -> G2Element {
-        G2Element {
-            c_element: unsafe {
+        let c_element = c_err_to_result(|did_error| {
+            let result = unsafe {
                 CoreMPLSign(
                     self.scheme,
                     private_key.as_mut_ptr(),
                     message.as_ptr() as *const _,
                     message.len(),
                 )
-            },
-        }
+            };
+            *did_error = result.is_null();
+            result
+        })
+        .expect("Signing failed");
+        G2Element { c_element }
     }
 
     fn verify(&self, public_key: &G1Element, message: &[u8], signature: &G2Element) -> bool {
@@ -190,6 +194,32 @@ impl LegacySchemeMPL {
             scheme: unsafe { NewLegacySchemeMPL() },
         }
     }
+
+    /// Signs a 32-byte message hash, rejecting messages of any other length.
+    pub fn try_sign(
+        &self,
+        private_key: &PrivateKey,
+        message: &[u8],
+    ) -> Result<G2Element, BlsError> {
+        if message.len() != 32 {
+            return Err(BlsError {
+                msg: "the legacy scheme signs a 32-byte message hash".to_owned(),
+            });
+        }
+        let c_element = c_err_to_result(|did_error| {
+            let result = unsafe {
+                LegacySchemeMPLSign(
+                    self.scheme,
+                    private_key.as_mut_ptr(),
+                    message.as_ptr() as *const _,
+                    message.len(),
+                )
+            };
+            *did_error = result.is_null();
+            result
+        })?;
+        Ok(G2Element { c_element })
+    }
 }
 
 impl Scheme for LegacySchemeMPL {
@@ -197,24 +227,10 @@ impl Scheme for LegacySchemeMPL {
         self.scheme
     }
 
+    /// Panics if legacy signing fails. Use `try_sign` for a recoverable error.
     fn sign(&self, private_key: &PrivateKey, message: &[u8]) -> G2Element {
-        // The legacy scheme signs 32-byte message hashes; the C++ side throws
-        // for anything else, and a C++ exception must not cross the FFI.
-        assert_eq!(message.len(), 32, "the legacy scheme signs a 32-byte message hash");
-        let c_element = unsafe {
-            LegacySchemeMPLSign(
-                self.scheme,
-                private_key.as_mut_ptr(),
-                message.as_ptr() as *const _,
-                message.len(),
-            )
-        };
-        // The C shim returns null when the C++ side threw.
-        if c_element.is_null() {
-            let msg = unsafe { CStr::from_ptr(GetLastErrorMsg()) };
-            panic!("LegacySchemeMPLSign failed: {}", msg.to_string_lossy());
-        }
-        G2Element { c_element }
+        self.try_sign(private_key, message)
+            .unwrap_or_else(|err| panic!("Legacy signing failed: {err}"))
     }
 
     fn verify(&self, public_key: &G1Element, message: &[u8], signature: &G2Element) -> bool {
@@ -438,6 +454,54 @@ mod tests {
     #[test]
     fn verify_aggregate_legacy() {
         verify_aggregate(LegacySchemeMPL::new());
+    }
+
+    #[test]
+    fn legacy_try_sign_and_c_bridges_reject_wrong_message_lengths() {
+        let scheme = LegacySchemeMPL::new();
+        let key = PrivateKey::key_gen(&scheme, &[1; 32]).unwrap();
+        let message = [0xAB; 64];
+        let signature = scheme.try_sign(&key, &message[..32]).unwrap();
+        assert_eq!(scheme.sign(&key, &message[..32]), signature);
+
+        for length in (0..32).chain([33, 64]) {
+            assert!(scheme.try_sign(&key, &message[..length]).is_err());
+            for result in unsafe {
+                [
+                    LegacySchemeMPLSign(
+                        scheme.as_mut_ptr(),
+                        key.as_mut_ptr(),
+                        message.as_ptr() as *const _,
+                        length,
+                    ),
+                    CoreMPLSign(
+                        scheme.as_mut_ptr(),
+                        key.as_mut_ptr(),
+                        message.as_ptr() as *const _,
+                        length,
+                    ),
+                ]
+            } {
+                if !result.is_null() {
+                    unsafe { bls_dash_sys::G2ElementFree(result) };
+                }
+                assert!(result.is_null());
+            }
+        }
+
+        let result = unsafe {
+            CoreMPLSign(
+                scheme.as_mut_ptr(),
+                key.as_mut_ptr(),
+                message.as_ptr() as *const _,
+                32,
+            )
+        };
+        assert!(!result.is_null());
+        unsafe {
+            assert!(bls_dash_sys::G2ElementIsEqual(result, signature.c_element));
+            bls_dash_sys::G2ElementFree(result);
+        }
     }
 
     fn legacy_key_and_signature() -> (LegacySchemeMPL, G1Element, G2Element) {

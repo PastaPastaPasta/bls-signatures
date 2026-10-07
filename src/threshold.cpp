@@ -96,6 +96,9 @@ namespace bls {
         if (vecIn.size() < 2) {
             throw std::length_error("At least 2 coefficients required");
         }
+        if (id.size() < Poly::nIdSize) {
+            throw std::invalid_argument("Threshold identifier must contain at least 32 bytes");
+        }
 
         blst_scalar x;
         ops.ScalarFromBytes(x, id.begin());
@@ -126,6 +129,12 @@ namespace bls {
             where a = prod S[j], b = S[i] * prod_{j != i} (S[j] - S[i])
         */
         const size_t k = vec.size();
+
+        for (const auto& id : ids) {
+            if (id.size() < Poly::nIdSize) {
+                throw std::invalid_argument("Threshold identifier must contain at least 32 bytes");
+            }
+        }
 
         std::vector<blst_scalar> delta(k);
         std::vector<blst_scalar> ids2(k);

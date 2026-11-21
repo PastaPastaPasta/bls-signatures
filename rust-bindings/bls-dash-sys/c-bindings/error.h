@@ -14,8 +14,24 @@
 
 #ifndef ERROR_H_
 #define ERROR_H_
-#include <string>
+#include <cstring>
+#include <type_traits>
 
-extern thread_local std::string gErrMsg;
+// Trivially destructible so that no thread-exit destructor can run before a
+// later failure on the same thread writes to it.
+struct ErrorMessage {
+    char buf[512];
+
+    ErrorMessage& operator=(const char* msg) {
+        std::strncpy(buf, msg, sizeof(buf) - 1);
+        buf[sizeof(buf) - 1] = '\0';
+        return *this;
+    }
+
+    const char* c_str() const { return buf; }
+};
+static_assert(std::is_trivially_destructible<ErrorMessage>::value, "");
+
+extern thread_local ErrorMessage gErrMsg;
 
 #endif  // ERROR_H_

@@ -243,6 +243,7 @@ fn main() {
     // // Rerun build if files changed
     // println!("cargo:rerun-if-changed={}", c_bindings_path.display());
     println!("cargo:rerun-if-changed={}", bls_dash_src_path.display());
+    println!("cargo:rerun-if-changed={}", c_bindings_path.display());
 }
 
 // fn main() {
@@ -392,4 +393,5 @@ fn main() {
     println!("cargo:rustc-link-lib=static=mimalloc-secure");
     println!("cargo:rustc-link-lib=static=dashbls");
     println!("cargo:rerun-if-changed={}", bls_dash_src_path.display());
+    println!("cargo:rerun-if-changed={}", c_bindings_path.display());
 }

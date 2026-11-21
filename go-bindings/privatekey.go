@@ -96,6 +96,8 @@ func (sk *PrivateKey) G2Power(el *G2Element) *G2Element {
 // Serialize returns the byte representation of the private key
 // this method is a binding of the bls::PrivateKey::Serialize
 func (sk *PrivateKey) Serialize() []byte {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
 	ptr := C.CPrivateKeySerialize(sk.val)
 	if ptr == nil {
 		panic("dashbls: private key serialization failed: " + errFromC().Error())

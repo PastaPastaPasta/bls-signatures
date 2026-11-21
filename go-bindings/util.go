@@ -19,6 +19,7 @@ package blschia
 // #include <string.h>
 import "C"
 import (
+	"runtime"
 	"unsafe"
 )
 
@@ -27,6 +28,8 @@ func secAllocFailed() string {
 }
 
 func cAllocBytes(data []byte) unsafe.Pointer {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
 	l := C.size_t(len(data))
 	ptr := unsafe.Pointer(C.SecAllocBytes(l))
 	if ptr == nil {
@@ -40,6 +43,8 @@ func cAllocBytes(data []byte) unsafe.Pointer {
 }
 
 func cAllocSigs(sigs ...*G2Element) *unsafe.Pointer {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
 	arr := C.AllocPtrArray(C.size_t(len(sigs)))
 	if arr == nil {
 		panic(secAllocFailed())
@@ -51,6 +56,8 @@ func cAllocSigs(sigs ...*G2Element) *unsafe.Pointer {
 }
 
 func cAllocPrivKeys(sks ...*PrivateKey) *unsafe.Pointer {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
 	arr := C.AllocPtrArray(C.size_t(len(sks)))
 	if arr == nil {
 		panic(secAllocFailed())
@@ -62,6 +69,8 @@ func cAllocPrivKeys(sks ...*PrivateKey) *unsafe.Pointer {
 }
 
 func cAllocMsgs(msgs [][]byte) (*unsafe.Pointer, []int) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
 	msgLens := make([]int, len(msgs))
 	cMsgArrPtr := C.AllocPtrArray(C.size_t(len(msgs)))
 	if cMsgArrPtr == nil {

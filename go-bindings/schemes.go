@@ -414,6 +414,8 @@ func (s *PopSchemeMPL) free() {
 }
 
 func cAllocPubKeys(pks ...*G1Element) *unsafe.Pointer {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
 	arr := C.AllocPtrArray(C.size_t(len(pks)))
 	if arr == nil {
 		panic(secAllocFailed())

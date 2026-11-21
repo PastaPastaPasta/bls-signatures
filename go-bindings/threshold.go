@@ -238,6 +238,8 @@ func ThresholdVerify(pk *G1Element, hash Hash, sig *G2Element) bool {
 }
 
 func cAllocHashes(hashes []Hash) *unsafe.Pointer {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
 	cArrPtr := C.AllocPtrArray(C.size_t(len(hashes)))
 	if cArrPtr == nil {
 		panic(secAllocFailed())

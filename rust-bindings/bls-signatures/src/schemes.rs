@@ -9,7 +9,7 @@ use bls_dash_sys::{
 };
 
 // TODO Split into modules
-use crate::{private_key::PrivateKey, utils::c_err_to_result, BlsError, G1Element, G2Element};
+use crate::{private_key::PrivateKey, BlsError, G1Element, G2Element};
 
 pub trait Scheme {
     fn as_mut_ptr(&self) -> *mut c_void;
@@ -130,19 +130,15 @@ impl Scheme for BasicSchemeMPL {
     }
 
     fn sign(&self, private_key: &PrivateKey, message: &[u8]) -> G2Element {
-        let c_element = c_err_to_result(|did_error| {
-            let result = unsafe {
-                CoreMPLSign(
-                    self.scheme,
-                    private_key.as_mut_ptr(),
-                    message.as_ptr() as *const _,
-                    message.len(),
-                )
-            };
-            *did_error = result.is_null();
-            result
-        })
-        .expect("Signing failed");
+        let c_element = unsafe {
+            CoreMPLSign(
+                self.scheme,
+                private_key.as_mut_ptr(),
+                message.as_ptr() as *const _,
+                message.len(),
+            )
+        };
+        assert!(!c_element.is_null(), "Signing failed");
         G2Element { c_element }
     }
 
@@ -206,18 +202,19 @@ impl LegacySchemeMPL {
                 msg: "the legacy scheme signs a 32-byte message hash".to_owned(),
             });
         }
-        let c_element = c_err_to_result(|did_error| {
-            let result = unsafe {
-                LegacySchemeMPLSign(
-                    self.scheme,
-                    private_key.as_mut_ptr(),
-                    message.as_ptr() as *const _,
-                    message.len(),
-                )
-            };
-            *did_error = result.is_null();
-            result
-        })?;
+        let c_element = unsafe {
+            LegacySchemeMPLSign(
+                self.scheme,
+                private_key.as_mut_ptr(),
+                message.as_ptr() as *const _,
+                message.len(),
+            )
+        };
+        if c_element.is_null() {
+            return Err(BlsError {
+                msg: "legacy signing failed".to_owned(),
+            });
+        }
         Ok(G2Element { c_element })
     }
 }

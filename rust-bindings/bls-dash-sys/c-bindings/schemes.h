@@ -36,7 +36,7 @@ PrivateKey CoreMPLKeyGen(
     const size_t seedLen,
     bool* didErr);
 G1Element CoreMPLSkToG1(const CoreMPL scheme, const PrivateKey sk);
-// Returns nullptr on signing failure; GetLastErrorMsg provides the error.
+// Returns nullptr on signing failure without setting GetLastErrorMsg.
 G2Element CoreMPLSign(
     const CoreMPL scheme,
     const PrivateKey sk,

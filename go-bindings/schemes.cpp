@@ -52,8 +52,7 @@ CG2Element CCoreMPLSign(CCoreMPL scheme, const CPrivateKey sk, const void* msg, 
         return new bls::G2Element(
             schemePtr->Sign(*skPtr, bls::Bytes((uint8_t*)msg, msgLen))
         );
-    } catch (const std::exception& ex) {
-        gErrMsg = ex.what();
+    } catch (const std::exception&) {
         return nullptr;
     }
 }
